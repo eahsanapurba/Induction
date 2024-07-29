@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OHS Induction</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    .pdf-container {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 80%;
+      background-color: white;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      overflow: hidden;
+    }
+    .pdf-container iframe {
+      width: 100%;
+      height: calc(100% - 50px);
+      border: none;
+    }
+    .modal-header, .modal-footer {
+      padding: 10px;
+      background-color: #f1f1f1;
+      border-bottom: 1px solid #ccc;
+      text-align: center;
+    }
+    .modal-footer {
+      border-top: 1px solid #ccc;
+      border-bottom: none;
+    }
+    #completion-page {
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="landing-page">
+      <h1>OHS Induction</h1>
+      <p>Select a name:</p>
+      <select id="name-select">
+        <option value="" disabled selected>Select an induction type</option>
+      </select>
+      <button class="btn" onclick="startInduction()">Begin</button>
+    </div>
+
+    <div id="pdf-modal" class="pdf-container">
+      <div class="modal-header">
+        <span id="close-modal" onclick="closeModal()" style="cursor: pointer;">&times;</span>
+        <h2>OHS Induction PDF</h2>
+      </div>
+      <iframe id="pdf-content" src=""></iframe>
+      <div class="modal-footer">
+        <button class="btn" onclick="nextPage()">Next</button>
+      </div>
+    </div>
+
+    <div id="completion-page">
+      <h1>Thank you for completing the OHS induction!</h1>
+      <p>Your completion has been recorded.</p>
+    </div>
+  </div>
+
+  <script>
+    var currentPage = 1;
+    var totalPages = 5; // Update with actual page count if necessary
+    var currentPdfUrl = "";
+
+    function loadNames() {
+      fetch('https://api.smartsheet.com/2.0/sheets/8128743897780100', {
+        headers: {
+          'Authorization': 'Bearer pRqQIpoQ9xHinA4XRiJkcDYK4vsnexzEg1vAS'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        const select = document.getElementById("name-select");
+        data.rows.forEach(row => {
+          const option = document.createElement("option");
+          option.value = row.cells[1].value; // Assuming column B has links
+          option.textContent = row.cells[0].value; // Assuming column A has names
+          select.appendChild(option);
+        });
+      })
+      .catch(error => console.error('Error fetching SmartSheet data:', error));
+    }
+
+    function startInduction() {
+      const select = document.getElementById("name-select");
+      const selectedOption = select.options[select.selectedIndex];
+      if (selectedOption.value) {
+        currentPdfUrl = selectedOption.value;
+        document.getElementById("landing-page").style.display = "none";
+        document.getElementById("pdf-modal").style.display = "block";
+        loadPDFPage(currentPage);
+      } else {
+        alert("Please select a name to begin.");
+      }
+    }
+
+    function loadPDFPage(pageNumber) {
+      document.getElementById("pdf-content").src = currentPdfUrl;
+    }
+
+    function nextPage() {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadPDFPage(currentPage);
+      } else {
+        document.getElementById("pdf-modal").style.display = "none";
+        document.getElementById("completion-page").style.display = "block";
+        const selectedName = document.getElementById("name-select").selectedOptions[0].text;
+        // Implement record completion functionality if needed
+      }
+    }
+
+    function closeModal() {
+      document.getElementById("pdf-modal").style.display = "none";
+    }
+
+    document.addEventListener('DOMContentLoaded', loadNames); // Load names on page load
+  </script>
+</body>
+</html>
